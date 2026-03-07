@@ -1,0 +1,55 @@
+services:
+  devcontainer:
+    container_name: felixrizzolli_devcontainer
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      - database
+    environment:
+      GH_TOKEN: ${GH_TOKEN}
+    env_file:
+      - path: ./.env
+        required: true
+    volumes:
+      - ../:/workspace
+      # Mount the setup.sh script to the container
+      - ./setup.sh:/root/setup.sh
+    ports:
+      - 3000:3000
+      - 6006:6006
+      - 3001:3001
+    networks:
+      - default
+    command: ["sleep", "infinity"]
+
+  database:
+    container_name: felixrizzolli_database
+    image: postgres:18.3
+    restart: always
+    environment:
+      POSTGRES_DB: ${DATABASE_NAME}
+      POSTGRES_USER: ${DATABASE_USER}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
+    volumes:
+      - postgres-data:/var/lib/postgresql
+      - ../scripts/init-db.sh:/docker-entrypoint-initdb.d/init-db.sh
+    ports:
+      - 5432:5432
+    networks:
+      - default
+
+volumes:
+  postgres-data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./data/postgres
+
+networks:
+  default:
+    name: devcontainer
+    driver: bridge
+    driver_opts:
+      com.docker.network.bridge.name: devcontainer

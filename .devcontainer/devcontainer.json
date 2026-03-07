@@ -1,0 +1,101 @@
+{
+  "name": "felixrizzolli.com - Monorepo",
+  "dockerComposeFile": "./compose.yml",
+  "service": "devcontainer",
+  "shutdownAction": "stopCompose",
+
+  "remoteUser": "root",
+  "workspaceFolder": "/workspace",
+
+  "postCreateCommand": "bash /root/setup.sh",
+
+  "mounts": [
+    "source=${localWorkspaceFolder}/.devcontainer/mounts/.jbdevcontainer/config,target=/.jbdevcontainer/config,type=bind"
+  ],
+
+  "remoteEnv": {
+    "WORKSPACE_FOLDER": "${containerWorkspaceFolder}"
+  },
+
+  "features": {
+    "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {
+      "moby": false
+    },
+    "ghcr.io/itsmechlark/features/postgresql:1": {},
+    "ghcr.io/devcontainers/features/github-cli:1": {}
+  },
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        /* Monorepo & Infrastructure */
+        "ms-azuretools.vscode-docker",
+
+        /* Nuxt/Vue */
+        "nuxtr.nuxt-vscode-extentions",
+        "graphql.vscode-graphql",
+        "graphql.vscode-graphql-syntax",
+
+        /* Code Quality */
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "streetsidesoftware.code-spell-checker",
+        "EditorConfig.EditorConfig",
+
+        /* Testing */
+        "vitest.explorer",
+        "ms-playwright.playwright",
+
+        /* Productivity */
+        "GitHub.copilot",
+        "GitHub.copilot-chat",
+        "usernamehw.errorlens",
+        "aaron-bond.better-comments",
+        "gruntfuggly.todo-tree",
+        "wix.vscode-import-cost",
+        "mskelton.npm-outdated",
+
+        /* Database */
+        "cweijan.vscode-database-client2",
+        "cweijan.dbclient-jdbc",
+
+        /* Git */
+        "eamodio.gitlens",
+        "mhutchie.git-graph"
+      ]
+    },
+    "jetbrains": {
+      "backend": "WebStorm",
+      "plugins": [
+        /* Monorepo & Infrastructure */
+        "org.jetbrains.plugins.workspace",
+        "ru.adelf.idea.dotenv",
+
+        /* Nuxt/Vue */
+        "com.intellij.lang.jsgraphql",
+
+        /* Productivity */
+        "com.github.copilot",
+
+        /* Code Quality */
+        "com.github.oxc.project.oxcintellijplugin"
+      ]
+    }
+  },
+
+  "forwardPorts": [3000, 6006, 3001],
+  "portsAttributes": {
+    "3000": {
+      "label": "Nuxt",
+      "onAutoForward": "notify"
+    },
+    "6006": {
+      "label": "Storybook",
+      "onAutoForward": "notify"
+    },
+    "3001": {
+      "label": "Payload",
+      "onAutoForward": "notify"
+    }
+  }
+}
