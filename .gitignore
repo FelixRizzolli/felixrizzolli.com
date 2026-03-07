@@ -2,13 +2,13 @@
 infrastructure/.env.*
 
 # data & mounts
-data/
-!.devcontainer/data/
-.devcontainer/data/postgres/
+data/*
+!.devcontainer/data/*
+.devcontainer/data/postgres/*
 !.devcontainer/data/postgres/.gitkeep
-.devcontainer/mounts/
+.devcontainer/mounts/*
 !.devcontainer/mounts/.gitkeep
 
 # apps
-apps/
+apps/*
 !apps/.gitkeep
