@@ -21,5 +21,4 @@ git config --global --add safe.directory /workspace
 BASH
 
 EXPOSE 3000
-EXPOSE 6006
-EXPOSE 3001
+EXPOSE 3011

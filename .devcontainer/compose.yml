@@ -17,8 +17,7 @@ services:
       - ./setup.sh:/root/setup.sh
     ports:
       - 3000:3000
-      - 6006:6006
-      - 3001:3001
+      - 3011:3011
     networks:
       - default
     command: ["sleep", "infinity"]

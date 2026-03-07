@@ -83,18 +83,14 @@
     }
   },
 
-  "forwardPorts": [3000, 6006, 3001],
+  "forwardPorts": [3000, 3011],
   "portsAttributes": {
     "3000": {
-      "label": "Nuxt",
+      "label": "API - PayloadCMS",
       "onAutoForward": "notify"
     },
-    "6006": {
-      "label": "Storybook",
-      "onAutoForward": "notify"
-    },
-    "3001": {
-      "label": "Payload",
+    "3011": {
+      "label": "Wedding - Frontend (Nuxt)",
       "onAutoForward": "notify"
     }
   }
