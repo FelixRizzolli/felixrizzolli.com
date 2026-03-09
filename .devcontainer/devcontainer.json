@@ -70,6 +70,7 @@
         /* Monorepo & Infrastructure */
         "org.jetbrains.plugins.workspace",
         "ru.adelf.idea.dotenv",
+        "com.github.xepozz.gitattributes",
 
         /* Nuxt/Vue */
         "com.intellij.lang.jsgraphql",
