@@ -24,18 +24,19 @@ clone_repo() {
     log_info "📦 Cloning $repo into $target..."
     if git clone "git@github.com:FelixRizzolli/$repo.git" "$target"; then
         log_info "✅ Successfully cloned $repo"
+
+        log_info "📦 Installing dependencies..."
+        cd $target && pnpm install
     else
         log_error "❌ Failed to clone $repo"
         return 1
     fi
 }
 
-clone_repo "felixrizzolli.com_wedding" "/workspace/apps/wedding"
 clone_repo "felixrizzolli.com_api" "/workspace/apps/api"
-
-# Install dependencies
-log_info "📦 Installing dependencies..."
-cd /workspace/apps/wedding && pnpm install
-cd /workspace/apps/api && pnpm install
+clone_repo "felixrizzolli.com_www" "/workspace/apps/www"
+clone_repo "felixrizzolli.com_docs" "/workspace/apps/docs"
+clone_repo "felixrizzolli.com_wedding" "/workspace/apps/wedding"
+clone_repo "felixrizzolli.com_traveling" "/workspace/apps/api"
 
 log_info "✅ Setup completed successfully!"
