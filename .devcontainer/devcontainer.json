@@ -90,8 +90,20 @@
       "label": "API - PayloadCMS",
       "onAutoForward": "notify"
     },
-    "3011": {
+    "3010": {
+      "label": "WWW - Frontend (...)",
+      "onAutoForward": "notify"
+    },
+    "3020": {
+      "label": "Docs - Frontend (...)",
+      "onAutoForward": "notify"
+    },
+    "3030": {
       "label": "Wedding - Frontend (Nuxt)",
+      "onAutoForward": "notify"
+    },
+    "3040": {
+      "label": "Traveling - Frontend (...)",
       "onAutoForward": "notify"
     }
   }
