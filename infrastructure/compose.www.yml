@@ -3,10 +3,10 @@ services:
     image: ghcr.io/felixrizzolli/felixrizzolli-com-www:${WWW_VERSION:-latest}
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.nuxt.rule=Host(`felixrizzolli.com`) || Host(`www.felixrizzolli.com`)"
-      - "traefik.http.routers.nuxt.entrypoints=websecure"
-      - "traefik.http.routers.nuxt.tls.certresolver=letsencrypt"
-      - "traefik.http.services.nuxt.loadbalancer.server.port=${WWW_PORT}"
+      - "traefik.http.routers.www.rule=Host(`felixrizzolli.com`) || Host(`www.felixrizzolli.com`)"
+      - "traefik.http.routers.www.entrypoints=websecure"
+      - "traefik.http.routers.www.tls.certresolver=letsencrypt"
+      - "traefik.http.services.www.loadbalancer.server.port=${WWW_PORT}"
     env_file:
       - path: ./.env
         required: true
@@ -34,5 +34,5 @@ services:
     networks:
       - felixrizzolli
     depends_on:
-      payload:
+      api:
         condition: service_healthy

@@ -1,12 +1,12 @@
 services:
-  payload:
+  api:
     image: ghcr.io/felixrizzolli/felixrizzolli-com-api:${PAYLOAD_VERSION:-latest}
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.nuxt.rule=Host(`api.felixrizzolli.com`)"
-      - "traefik.http.routers.nuxt.entrypoints=websecure"
-      - "traefik.http.routers.nuxt.tls.certresolver=letsencrypt"
-      - "traefik.http.services.nuxt.loadbalancer.server.port=${API_PORT}"
+      - "traefik.http.routers.api.rule=Host(`api.felixrizzolli.com`)"
+      - "traefik.http.routers.api.entrypoints=websecure"
+      - "traefik.http.routers.api.tls.certresolver=letsencrypt"
+      - "traefik.http.services.api.loadbalancer.server.port=${API_PORT}"
     environment:
       NODE_ENV: ${NODE_ENV:-production}
     env_file:

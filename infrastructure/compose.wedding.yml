@@ -1,12 +1,12 @@
 services:
-  nuxt:
+  wedding:
     image: ghcr.io/felixrizzolli/felixrizzolli-com-wedding:${WEDDING_VERSION:-latest}
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.nuxt.rule=Host(`wedding.felixrizzolli.com`)"
-      - "traefik.http.routers.nuxt.entrypoints=websecure"
-      - "traefik.http.routers.nuxt.tls.certresolver=letsencrypt"
-      - "traefik.http.services.nuxt.loadbalancer.server.port=${WEDDING_PORT}"
+      - "traefik.http.routers.wedding.rule=Host(`wedding.felixrizzolli.com`)"
+      - "traefik.http.routers.wedding.entrypoints=websecure"
+      - "traefik.http.routers.wedding.tls.certresolver=letsencrypt"
+      - "traefik.http.services.wedding.loadbalancer.server.port=${WEDDING_PORT}"
     env_file:
       - path: ./.env
         required: true
@@ -34,5 +34,5 @@ services:
     networks:
       - felixrizzolli
     depends_on:
-      payload:
+      api:
         condition: service_healthy
