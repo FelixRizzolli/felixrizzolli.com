@@ -1,0 +1,100 @@
+name: Automated Deployment
+
+on:
+  # Triggered by sub-project build workflows via repository_dispatch.
+  # The client_payload may carry a `version` field (e.g. "sha-abc1234")
+  # so we deploy a pinned image instead of blindly pulling :latest.
+  #
+  # Example dispatch from a build workflow:
+  #   - uses: peter-evans/repository-dispatch@v3
+  #     with:
+  #       event-type: api-updated
+  #       client-payload: '{"version": "${{ github.sha }}"}'
+  repository_dispatch:
+    types: [api-updated, www-updated, docs-updated, wedding-updated, traveling-updated]
+
+  # Manual trigger with explicit service + optional version override
+  workflow_dispatch:
+    inputs:
+      service:
+        description: "Service to deploy"
+        type: choice
+        options: [all, api, www, docs, wedding, traveling]
+        default: all
+      version:
+        description: "Docker image tag to deploy (leave empty for 'latest')"
+        type: string
+        default: ""
+
+concurrency:
+  # Only one deployment at a time; subsequent runs queue up rather than cancel.
+  group: deploy-${{ github.workflow }}
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy ${{ github.event.action || inputs.service }}
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - name: Resolve service name and version
+        id: params
+        run: |
+          # Map repository_dispatch event types → service names
+          EVENT="${{ github.event.action || inputs.service }}"
+          case "$EVENT" in
+            api-updated)        SERVICE="api"       ;;
+            www-updated)        SERVICE="www"       ;;
+            docs-updated)       SERVICE="docs"      ;;
+            wedding-updated)    SERVICE="wedding"   ;;
+            traveling-updated)  SERVICE="traveling" ;;
+            *)                  SERVICE="$EVENT"    ;;
+          esac
+
+          # Version: prefer client_payload from repository_dispatch, then
+          # workflow_dispatch input, then fall back to "latest"
+          VERSION="${{ github.event.client_payload.version || inputs.version }}"
+          VERSION="${VERSION:-latest}"
+
+          echo "service=$SERVICE"   >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION"   >> "$GITHUB_OUTPUT"
+          echo "Deploying $SERVICE @ $VERSION"
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.2.3
+        with:
+          host: ${{ secrets.PROD_HOST }}
+          username: ${{ secrets.PROD_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script_stop: true
+          script: |
+            bash /var/www/felixrizzolli.com/scripts/deploy.sh \
+              "${{ steps.params.outputs.service }}" \
+              "${{ steps.params.outputs.version }}"
+
+      - name: Health check
+        run: |
+          echo "Waiting for services to come up..."
+          sleep 15
+
+          check() {
+            local url="$1"
+            local attempts=5
+            local delay=10
+            for i in $(seq 1 "$attempts"); do
+              if curl -fsSL --max-time 10 "$url" > /dev/null 2>&1; then
+                echo "✓  $url"
+                return 0
+              fi
+              echo "   ($i/$attempts) $url not ready, retrying in ${delay}s..."
+              sleep "$delay"
+            done
+            echo "✗  $url unreachable after $attempts attempts" >&2
+            return 1
+          }
+
+          check "https://felixrizzolli.com"
+          check "https://api.felixrizzolli.com/_health"
+          check "https://wedding.kraeuterakademie.it/_health"
+
