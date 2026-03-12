@@ -37,7 +37,7 @@ services:
       PGOPTIONS: "-c log_statement=all -c log_connections=on -c log_disconnections=on"
     volumes:
       - postgres-data:/var/lib/postgresql
-      - ../scripts/init-db.sh:/docker-entrypoint-initdb.d/init-db.sh
+      - ../scripts/init-db:/docker-entrypoint-initdb.d
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DATABASE_USER}"]
       interval: 10s
