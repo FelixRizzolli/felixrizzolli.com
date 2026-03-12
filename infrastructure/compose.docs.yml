@@ -1,0 +1,38 @@
+services:
+  nuxt:
+    image: ghcr.io/felixrizzolli/felixrizzolli-com-docs:${DOCS_VERSION:-latest}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.nuxt.rule=Host(`docs.felixrizzolli.com`)"
+      - "traefik.http.routers.nuxt.entrypoints=websecure"
+      - "traefik.http.routers.nuxt.tls.certresolver=letsencrypt"
+      - "traefik.http.services.nuxt.loadbalancer.server.port=${DOCS_PORT}"
+    env_file:
+      - path: ./.env
+        required: true
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--no-verbose",
+          "--tries=1",
+          "--spider",
+          "http://${DOCS_HOST}:${DOCS_PORT}",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
+    restart: unless-stopped
+    networks:
+      - felixrizzolli
+    depends_on:
+      payload:
+        condition: service_healthy

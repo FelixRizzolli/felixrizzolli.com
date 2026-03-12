@@ -1,0 +1,42 @@
+services:
+  payload:
+    image: ghcr.io/felixrizzolli/felixrizzolli-com-api:${PAYLOAD_VERSION:-latest}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.nuxt.rule=Host(`api.felixrizzolli.com`)"
+      - "traefik.http.routers.nuxt.entrypoints=websecure"
+      - "traefik.http.routers.nuxt.tls.certresolver=letsencrypt"
+      - "traefik.http.services.nuxt.loadbalancer.server.port=${API_PORT}"
+    environment:
+      NODE_ENV: ${NODE_ENV:-production}
+    env_file:
+      - path: ./.env
+        required: true
+    volumes:
+      - payload-data:/app/data
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--no-verbose",
+          "--tries=1",
+          "--spider",
+          "http://${API_HOST}:${API_PORT}/health",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
+    restart: unless-stopped
+    networks:
+      - felixrizzolli
+    depends_on:
+      database:
+        condition: service_healthy
