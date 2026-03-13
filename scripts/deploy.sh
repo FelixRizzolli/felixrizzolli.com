@@ -58,6 +58,9 @@ if [ ! -f "$ENV_FILE" ]; then
 fi
 
 COMPOSE_BASE=(
+  # Note: compose.proxy.yml (Traefik) is intentionally excluded here.
+  # The reverse proxy is a standalone service managed by init-server.sh
+  # and shared with other projects on this server
   "-f" "compose.yml"
   "-f" "compose.api.yml"
   "-f" "compose.www.yml"
@@ -72,9 +75,9 @@ COMPOSE_BASE=(
 #
 #   deploy_service <compose-service-name> <version-env-var>
 #
-#   The version env var (e.g. PAYLOAD_VERSION) is the variable referenced
+#   The version env var (e.g. API_VERSION) is the variable referenced
 #   in the compose file image tag, e.g.:
-#     image: ghcr.io/.../api:${PAYLOAD_VERSION:-latest}
+#     image: ghcr.io/.../api:${API_VERSION:-latest}
 # ---------------------------------------------------------------------------
 deploy_service() {
   local service="$1"
@@ -115,7 +118,7 @@ deploy_service() {
 # ---------------------------------------------------------------------------
 case $SERVICE in
   api)
-    deploy_service "api" "PAYLOAD_VERSION"
+    deploy_service "api" "API_VERSION"
     ;;
   www)
     deploy_service "www" "WWW_VERSION"
@@ -133,7 +136,7 @@ case $SERVICE in
     echo ""
     echo "--> Pulling all images ($VERSION)..."
     (
-      export PAYLOAD_VERSION=$VERSION
+      export API_VERSION=$VERSION
       export WWW_VERSION=$VERSION
       export DOCS_VERSION=$VERSION
       export WEDDING_VERSION=$VERSION
