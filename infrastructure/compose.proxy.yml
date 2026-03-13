@@ -1,0 +1,78 @@
+# Shared reverse proxy – started ONCE on the server, serves ALL projects.
+#
+# This container owns ports 80 and 443 for the entire host. Any other project
+# that needs web traffic must:
+#   1. Declare the traefik-public network as external in their compose file:
+#
+#        networks:
+#          traefik-public:
+#            external: true
+#
+#   2. Attach their routable services to that network and add Traefik labels:
+#
+#        services:
+#          my-service:
+#            networks:
+#              - traefik-public
+#              - <their-internal-network>
+#            labels:
+#              - "traefik.enable=true"
+#              - "traefik.http.routers.<name>.rule=Host(`<domain>`)"
+#              - "traefik.http.routers.<name>.entrypoints=websecure"
+#              - "traefik.http.routers.<name>.tls.certresolver=letsencrypt"
+#              - "traefik.http.services.<name>.loadbalancer.server.port=<port>"
+#
+# Initial setup (run once on a fresh server):
+#   bash /var/www/felixrizzolli.com/scripts/init-server.sh
+
+services:
+  traefik:
+    image: traefik:v3.6
+    command:
+      - "--api.dashboard=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      # When a container is on multiple networks, Traefik must know which one to
+      # use for proxying. Always use traefik-public.
+      - "--providers.docker.network=traefik-public"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.web.http.redirections.entrypoint.to=websecure"
+      - "--entrypoints.web.http.redirections.entrypoint.scheme=https"
+      - "--entrypoints.websecure.address=:443"
+      - "--certificatesresolvers.letsencrypt.acme.httpchallenge=true"
+      - "--certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=web"
+      - "--certificatesresolvers.letsencrypt.acme.email=felixrizzolli@outlook.de"
+      - "--certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.traefik.rule=Host(`traefik.felixrizzolli.com`)"
+      - "traefik.http.routers.traefik.service=api@internal"
+      - "traefik.http.routers.traefik.entrypoints=websecure"
+      - "traefik.http.routers.traefik.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.traefik.middlewares=auth"
+      - "traefik.http.middlewares.auth.basicauth.users=${TRAEFIK_AUTH}"
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      - "letsencrypt-data:/letsencrypt"
+    networks:
+      - traefik-public
+    restart: unless-stopped
+
+volumes:
+  letsencrypt-data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /var/lib/docker-volumes/letsencrypt
+
+networks:
+  traefik-public:
+    # Explicit name prevents Docker Compose from prefixing it with the project name,
+    # so all projects can reliably reference it as "traefik-public".
+    name: traefik-public
+    driver: bridge
+

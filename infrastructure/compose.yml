@@ -1,37 +1,7 @@
-# Base configuration - shared by all environments
+# Application infrastructure: database and shared volumes.
+# The reverse proxy (Traefik) lives in compose.proxy.yml and is shared
+# across all projects on this server.
 services:
-  traefik:
-    image: traefik:v3.6
-    command:
-      - "--api.dashboard=true"
-      - "--providers.docker=true"
-      - "--providers.docker.exposedbydefault=false"
-      - "--entrypoints.web.address=:80"
-      - "--entrypoints.web.http.redirections.entrypoint.to=websecure"
-      - "--entrypoints.web.http.redirections.entrypoint.scheme=https"
-      - "--entrypoints.websecure.address=:443"
-      - "--certificatesresolvers.letsencrypt.acme.httpchallenge=true"
-      - "--certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=web"
-      - "--certificatesresolvers.letsencrypt.acme.email=felixrizzolli@outlook.de"
-      - "--certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json"
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.traefik.rule=Host(`traefik.felixrizzolli.com`)"
-      - "traefik.http.routers.traefik.service=api@internal"
-      - "traefik.http.routers.traefik.entrypoints=websecure"
-      - "traefik.http.routers.traefik.tls.certresolver=letsencrypt"
-      - "traefik.http.routers.traefik.middlewares=auth"
-      - "traefik.http.middlewares.auth.basicauth.users=${TRAEFIK_AUTH}"
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - "/var/run/docker.sock:/var/run/docker.sock:ro"
-      - "letsencrypt-data:/letsencrypt"
-    networks:
-      - felixrizzolli
-    restart: unless-stopped
-
   database:
     image: postgres:18
     environment:
@@ -58,12 +28,6 @@ volumes:
       type: none
       o: bind
       device: /var/lib/docker-volumes/felixrizzolli.com/${ENVIRONMENT:-production}/postgres
-  letsencrypt-data:
-    driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: /var/lib/docker-volumes/felixrizzolli.com/letsencrypt
   payload-data:
     driver: local
     driver_opts:
@@ -72,5 +36,10 @@ volumes:
       device: /var/lib/docker-volumes/felixrizzolli.com/${ENVIRONMENT:-production}/payload-data
 
 networks:
+  # External network shared with all other projects on this server.
+  # Created once by compose.proxy.yml / init-server.sh.
+  traefik-public:
+    external: true
+  # Internal network for service-to-service communication within this project.
   felixrizzolli:
     driver: bridge

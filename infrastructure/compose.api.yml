@@ -36,7 +36,8 @@ services:
           memory: 256M
     restart: unless-stopped
     networks:
-      - felixrizzolli
+      - traefik-public  # Traefik routes HTTPS traffic here
+      - felixrizzolli   # Database access
     depends_on:
       database:
         condition: service_healthy
