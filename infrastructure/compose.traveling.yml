@@ -1,5 +1,6 @@
 services:
   traveling:
+    container_name: "felixrizzolli-com-traveling"
     image: ghcr.io/felixrizzolli/felixrizzolli-com-traveling:${TRAVELING_VERSION:-latest}
     labels:
       - "traefik.enable=true"

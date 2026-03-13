@@ -1,5 +1,6 @@
 services:
   wedding:
+    container_name: "felixrizzolli-com-wedding"
     image: ghcr.io/felixrizzolli/felixrizzolli-com-wedding:${WEDDING_VERSION:-latest}
     labels:
       - "traefik.enable=true"

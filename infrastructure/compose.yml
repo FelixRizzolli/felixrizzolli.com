@@ -2,7 +2,8 @@
 # The reverse proxy (Traefik) lives in compose.proxy.yml and is shared
 # across all projects on this server.
 services:
-  database:
+  postgres:
+    container_name: "felixrizzolli-com-postgres"
     image: postgres:18
     environment:
       DATABASE_NAMES: ${DATABASE_NAMES}

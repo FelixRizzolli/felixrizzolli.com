@@ -1,5 +1,6 @@
 services:
   docs:
+    container_name: "felixrizzolli-com-docs"
     image: ghcr.io/felixrizzolli/felixrizzolli-com-docs:${DOCS_VERSION:-latest}
     labels:
       - "traefik.enable=true"
