@@ -61,6 +61,32 @@ jobs:
           echo "version=$VERSION"   >> "$GITHUB_OUTPUT"
           echo "Deploying $SERVICE @ $VERSION"
 
+      # -----------------------------------------------------------------------
+      # Write the environment file to the server from the GitHub secret.
+      #
+      # Store your entire .env.prod content as a single GitHub Actions secret
+      # named PROD_ENV in the "production" environment. Every deploy overwrites
+      # the file on the server, so rotating a variable is just updating the
+      # secret and triggering a redeploy.
+      # -----------------------------------------------------------------------
+      - name: Upload environment file
+        env:
+          PROD_ENV: ${{ secrets.PROD_ENV }}
+        run: |
+          # Write the secret to a temp file. Using env: instead of inline
+          # ${{ }} safely handles newlines and special characters.
+          printf '%s' "$PROD_ENV" > .env.prod
+
+      - name: Upload environment file to server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.PROD_HOST }}
+          username: ${{ secrets.PROD_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: ".env.prod"
+          target: "/var/www/felixrizzolli.com/infrastructure/"
+          overwrite: true
+
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.2.3
         with:
@@ -96,5 +122,4 @@ jobs:
 
           check "https://felixrizzolli.com"
           check "https://api.felixrizzolli.com/_health"
-          check "https://wedding.kraeuterakademie.it/_health"
-
+          check "https://wedding.felixrizzolli.com/_health"

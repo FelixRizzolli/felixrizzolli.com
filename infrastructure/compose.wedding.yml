@@ -8,7 +8,7 @@ services:
       - "traefik.http.routers.wedding.tls.certresolver=letsencrypt"
       - "traefik.http.services.wedding.loadbalancer.server.port=${WEDDING_PORT}"
     env_file:
-      - path: ./.env
+      - path: ./.env.prod
         required: true
     healthcheck:
       test:

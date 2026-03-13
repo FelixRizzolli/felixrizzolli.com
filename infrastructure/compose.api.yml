@@ -10,7 +10,7 @@ services:
     environment:
       NODE_ENV: ${NODE_ENV:-production}
     env_file:
-      - path: ./.env
+      - path: ./.env.prod
         required: true
     volumes:
       - payload-data:/app/data

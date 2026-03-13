@@ -8,7 +8,7 @@ services:
       - "traefik.http.routers.www.tls.certresolver=letsencrypt"
       - "traefik.http.services.www.loadbalancer.server.port=${WWW_PORT}"
     env_file:
-      - path: ./.env
+      - path: ./.env.prod
         required: true
     healthcheck:
       test:
