@@ -74,4 +74,105 @@ runtime for all subprojects.
 
 ## 🚀 Deployment
 
-The production deployment process is automated with GitHub Actions.
+The production deployment process is fully automated with GitHub Actions.
+Container images are built and pushed to the
+[GitHub Container Registry (GHCR)](https://ghcr.io) by each sub-project's
+own CI pipeline. **This repository only handles server provisioning and service
+deployments — it never builds images.**
+
+### Workflows
+
+| Workflow | File | Trigger | Purpose |
+|---|---|---|---|
+| Server Initialization | [`server-init.yml`](.github/workflows/server-init.yml) | Manual | Clones this repo on a fresh server and runs the one-time setup |
+| Automated Deployment  | [`deploy.yml`](.github/workflows/deploy.yml)           | Automatic / Manual | Deploys a specific service by pulling its latest image |
+
+### Deployment Flow
+
+```
+Sub-project repository                    This repository
+──────────────────────────────────────    ──────────────────────────────────────
+1. Code is pushed to main
+2. Build workflow runs:
+   - Builds Docker image
+   - Pushes to GHCR with tags:
+       :latest
+       :sha-<commit>
+   - Dispatches repository_dispatch  ──▶  3. deploy.yml is triggered
+        event-type: <service>-updated         - Assembles .env.prod from
+        client-payload:                          GitHub secrets + variables
+          version: sha-<commit>               - Uploads .env.prod to server
+                                              - Runs deploy.sh <service> <version>
+                                                - Pulls new image
+                                                - Restarts container
+                                                - Waits for health check ✓
+                                                - Rolls back on failure  ✗
+```
+
+### Initial Server Setup
+
+Run **once** on a fresh Hetzner server. Before triggering the workflow, make
+sure all secrets and variables are configured (see [Requirements](#requirements)
+below).
+
+1. Go to **Actions → Server Initialization → Run workflow**.
+
+The workflow will:
+
+- Clone this repository to `/var/www/felixrizzolli.com` on the server
+- Upload `.env.prod` assembled from your GitHub secrets and variables
+- Create all required Docker volume directories
+- Start the shared Traefik reverse proxy *(only if `WITH_PROXY=true`)*
+
+### Redeploying Manually
+
+Go to **Actions → Automated Deployment → Run workflow**, pick the service,
+and optionally enter a specific image tag. Leave the version field empty to
+redeploy the `:latest` image.
+
+---
+
+### Requirements
+
+> Configure the following in the **`production`** GitHub environment before
+> running either workflow.
+> Navigate to **Settings → Environments → production**.
+
+#### Variables
+
+Non-sensitive configuration values. Visible in workflow logs.
+
+| Variable | Example | Description |
+|---|---|---|
+| `WITH_PROXY` | `true` | `true` if this project owns and starts the shared Traefik reverse proxy. Set to `false` if another project on the same server already manages it. |
+| `ACME_EMAIL` | `you@example.com` | Email address for Let's Encrypt certificate expiry notifications. |
+| `TRAEFIK_DASHBOARD_DOMAIN` | `traefik.example.com` | Hostname for the Traefik dashboard. |
+| `API_DOMAIN` | `api.example.com` | Public hostname of the API service. |
+| `WWW_DOMAIN` | `example.com` | Root hostname of the main website. The `www.` subdomain is added automatically. |
+| `DOCS_DOMAIN` | `docs.example.com` | Hostname of the documentation site. |
+| `WEDDING_DOMAIN` | `wedding.example.com` | Hostname of the wedding website. |
+| `TRAVELING_DOMAIN` | `traveling.example.com` | Hostname of the traveling blog. |
+
+#### Secrets
+
+Sensitive values, encrypted by GitHub and never exposed in logs.
+
+| Secret | Description |
+|---|---|
+| `PROD_HOST` | IP address or hostname of the production server. |
+| `PROD_USER` | SSH login username on the production server. |
+| `SSH_PRIVATE_KEY` | Private SSH key for authenticating with the server. The corresponding public key must be in `~/.ssh/authorized_keys` on the server. |
+| `PROD_ENV` | Full content of the `.env.prod` file. Contains all remaining runtime secrets. See the template below. |
+
+#### `PROD_ENV` Secret Template
+
+Use [`infrastructure/.env`](infrastructure/.env) as your template — it
+documents every required variable with example values and notes which ones
+are managed separately as GitHub environment variables. Copy its contents
+into the `PROD_ENV` secret and replace the `changeme` placeholders with
+your real values.
+
+> **Note:** The `*_DOMAIN` and `WITH_PROXY` variables are included in that
+> file for documentation and standalone use. In CI they are **overridden**
+> by the GitHub environment variables configured above, so you don't need
+> to keep them in sync manually.
