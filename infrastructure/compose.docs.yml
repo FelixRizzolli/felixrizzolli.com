@@ -4,7 +4,7 @@ services:
     image: ghcr.io/felixrizzolli/felixrizzolli-com-docs:${DOCS_VERSION:-latest}
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.docs.rule=Host(`docs.felixrizzolli.com`)"
+      - "traefik.http.routers.docs.rule=Host(`${DOCS_DOMAIN}`)"
       - "traefik.http.routers.docs.entrypoints=websecure"
       - "traefik.http.routers.docs.tls.certresolver=letsencrypt"
       - "traefik.http.services.docs.loadbalancer.server.port=${DOCS_PORT}"

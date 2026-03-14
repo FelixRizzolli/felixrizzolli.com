@@ -4,7 +4,7 @@ services:
     image: ghcr.io/felixrizzolli/felixrizzolli-com-www:${WWW_VERSION:-latest}
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.www.rule=Host(`felixrizzolli.com`) || Host(`www.felixrizzolli.com`)"
+      - "traefik.http.routers.www.rule=Host(`${WWW_DOMAIN}`) || Host(`www.${WWW_DOMAIN}`)"
       - "traefik.http.routers.www.entrypoints=websecure"
       - "traefik.http.routers.www.tls.certresolver=letsencrypt"
       - "traefik.http.services.www.loadbalancer.server.port=${WWW_PORT}"

@@ -4,7 +4,7 @@ services:
     image: ghcr.io/felixrizzolli/felixrizzolli-com-traveling:${TRAVELING_VERSION:-latest}
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.traveling.rule=Host(`traveling.felixrizzolli.com`)"
+      - "traefik.http.routers.traveling.rule=Host(`${TRAVELING_DOMAIN}`)"
       - "traefik.http.routers.traveling.entrypoints=websecure"
       - "traefik.http.routers.traveling.tls.certresolver=letsencrypt"
       - "traefik.http.services.traveling.loadbalancer.server.port=${TRAVELING_PORT}"

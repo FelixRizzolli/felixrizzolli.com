@@ -4,7 +4,7 @@ services:
     image: ghcr.io/felixrizzolli/felixrizzolli-com-wedding:${WEDDING_VERSION:-latest}
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.wedding.rule=Host(`wedding.felixrizzolli.com`)"
+      - "traefik.http.routers.wedding.rule=Host(`${WEDDING_DOMAIN}`)"
       - "traefik.http.routers.wedding.entrypoints=websecure"
       - "traefik.http.routers.wedding.tls.certresolver=letsencrypt"
       - "traefik.http.services.wedding.loadbalancer.server.port=${WEDDING_PORT}"
