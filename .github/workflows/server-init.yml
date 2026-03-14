@@ -1,0 +1,111 @@
+name: Server Initialization
+
+on:
+  # This workflow is triggered manually — run it once on a fresh server.
+  # See the "Initial Server Setup" section in README.md for instructions.
+  workflow_dispatch:
+
+concurrency:
+  group: server-init
+  cancel-in-progress: false
+
+jobs:
+  initialize:
+    name: Initialize production server
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      # -----------------------------------------------------------------------
+      # Step 1 – Assemble .env.prod (same logic as in deploy.yml).
+      #
+      # PROD_ENV secret  → sensitive values (DB credentials, API secrets, …)
+      # GitHub variables → non-sensitive config (domains, feature flags, …)
+      # -----------------------------------------------------------------------
+      - name: Generate environment file
+        env:
+          PROD_ENV: ${{ secrets.PROD_ENV }}
+        run: |
+          # 1. Write the sensitive secrets blob.
+          printf '%s\n' "$PROD_ENV" > .env.prod
+
+          # 2. Append GitHub environment variables (override duplicates).
+          cat >> .env.prod << EOF
+
+          # --- Managed as GitHub environment variables ---
+          ACME_EMAIL=${{ vars.ACME_EMAIL }}
+          TRAEFIK_DASHBOARD_DOMAIN=${{ vars.TRAEFIK_DASHBOARD_DOMAIN }}
+          API_DOMAIN=${{ vars.API_DOMAIN }}
+          WWW_DOMAIN=${{ vars.WWW_DOMAIN }}
+          DOCS_DOMAIN=${{ vars.DOCS_DOMAIN }}
+          WEDDING_DOMAIN=${{ vars.WEDDING_DOMAIN }}
+          TRAVELING_DOMAIN=${{ vars.TRAVELING_DOMAIN }}
+          WITH_PROXY=${{ vars.WITH_PROXY }}
+          EOF
+
+      # -----------------------------------------------------------------------
+      # Step 2 – Clone or update the repository on the server.
+      #
+      # The target directory is /var/www/felixrizzolli.com. If it already
+      # exists (re-run), the repo is updated to the latest main instead.
+      # -----------------------------------------------------------------------
+      - name: Clone repository on server
+        uses: appleboy/ssh-action@v1.2.3
+        with:
+          host: ${{ secrets.PROD_HOST }}
+          username: ${{ secrets.PROD_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script_stop: true
+          script: |
+            set -euo pipefail
+
+            REPO_URL="https://github.com/${{ github.repository }}.git"
+            REPO_DIR="/var/www/felixrizzolli.com"
+
+            if [ -d "$REPO_DIR/.git" ]; then
+              echo "==> Repository already exists — pulling latest main..."
+              cd "$REPO_DIR"
+              git fetch origin main
+              git reset --hard origin/main
+            else
+              echo "==> Cloning $REPO_URL..."
+              mkdir -p "$(dirname "$REPO_DIR")"
+              git clone "$REPO_URL" "$REPO_DIR"
+            fi
+
+            echo "==> Making scripts executable..."
+            chmod +x "$REPO_DIR/scripts/"*.sh
+
+            echo "   ✓ Repository ready"
+
+      # -----------------------------------------------------------------------
+      # Step 3 – Upload the assembled .env.prod to the server.
+      #
+      # The file is placed in infrastructure/ where all compose files and
+      # scripts expect to find it. It is listed in .gitignore and is never
+      # committed to the repository.
+      # -----------------------------------------------------------------------
+      - name: Upload environment file to server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.PROD_HOST }}
+          username: ${{ secrets.PROD_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: ".env.prod"
+          target: "/var/www/felixrizzolli.com/infrastructure/"
+          overwrite: true
+
+      # -----------------------------------------------------------------------
+      # Step 4 – Run the initialization script.
+      #
+      # Creates volume directories and starts Traefik (if WITH_PROXY=true).
+      # -----------------------------------------------------------------------
+      - name: Run initialization script
+        uses: appleboy/ssh-action@v1.2.3
+        with:
+          host: ${{ secrets.PROD_HOST }}
+          username: ${{ secrets.PROD_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script_stop: true
+          script: bash /var/www/felixrizzolli.com/scripts/init-server.sh
+
