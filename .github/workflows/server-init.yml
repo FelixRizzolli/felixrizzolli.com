@@ -33,14 +33,14 @@ jobs:
           cat >> .env.prod << EOF
 
           # --- Managed as GitHub environment variables ---
-          ACME_EMAIL=${{ vars.ACME_EMAIL }}
-          TRAEFIK_DASHBOARD_DOMAIN=${{ vars.TRAEFIK_DASHBOARD_DOMAIN }}
-          API_DOMAIN=${{ vars.API_DOMAIN }}
-          WWW_DOMAIN=${{ vars.WWW_DOMAIN }}
-          DOCS_DOMAIN=${{ vars.DOCS_DOMAIN }}
-          WEDDING_DOMAIN=${{ vars.WEDDING_DOMAIN }}
-          TRAVELING_DOMAIN=${{ vars.TRAVELING_DOMAIN }}
-          WITH_PROXY=${{ vars.WITH_PROXY }}
+          ACME_EMAIL='${{ vars.ACME_EMAIL }}'
+          TRAEFIK_DASHBOARD_DOMAIN='${{ vars.TRAEFIK_DASHBOARD_DOMAIN }}'
+          API_DOMAIN='${{ vars.API_DOMAIN }}'
+          WWW_DOMAIN='${{ vars.WWW_DOMAIN }}'
+          DOCS_DOMAIN='${{ vars.DOCS_DOMAIN }}'
+          WEDDING_DOMAIN='${{ vars.WEDDING_DOMAIN }}'
+          TRAVELING_DOMAIN='${{ vars.TRAVELING_DOMAIN }}'
+          WITH_PROXY='${{ vars.WITH_PROXY }}'
           EOF
 
       # -----------------------------------------------------------------------
