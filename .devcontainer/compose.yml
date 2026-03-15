@@ -16,11 +16,11 @@ services:
       # Mount the setup.sh script to the container
       - ./setup.sh:/root/setup.sh
     ports:
-      - 3000:3000
-      - 3010:3010
-      - 3020:3020
-      - 3030:3030
-      - 3040:3040
+      - "3000:3000"
+      - "3010:3010"
+      - "3020:3020"
+      - "3030:3030"
+      - "3040:3040"
     networks:
       - default
     command: ["sleep", "infinity"]
