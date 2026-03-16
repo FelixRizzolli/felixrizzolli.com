@@ -1,5 +1,11 @@
 # Shared reverse proxy – started ONCE on the server, serves ALL projects.
 #
+# IMPORTANT: The top-level `name: proxy` below pins this stack to its own
+# Docker Compose project ("proxy"), completely isolated from the
+# felixrizzolli application project. Without this, Docker Compose treats
+# the traefik container as an orphan of the application project and removes
+# it on every deployment.
+#
 # This container owns ports 80 and 443 for the entire host. Any other project
 # that needs web traffic must:
 #   1. Declare the traefik-public network as external in their compose file:
@@ -24,6 +30,8 @@
 #
 # Initial setup (run once on a fresh server):
 #   bash /var/www/felixrizzolli.com/scripts/init-server.sh
+
+name: proxy
 
 services:
   traefik:

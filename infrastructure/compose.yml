@@ -1,6 +1,16 @@
 # Application infrastructure: database and shared volumes.
 # The reverse proxy (Traefik) lives in compose.proxy.yml and is shared
 # across all projects on this server.
+#
+# IMPORTANT: `name: felixrizzolli` below gives this stack an explicit,
+# unique Docker Compose project name.  Without it, Docker Compose would
+# fall back to the directory name ("infrastructure"), which every other
+# project on the same server also uses. That collision makes Docker Compose
+# treat containers from foreign projects as orphans of THIS project and
+# potentially remove them on every deployment.
+
+name: felixrizzolli
+
 services:
   postgres:
     container_name: "felixrizzolli-com-postgres"
