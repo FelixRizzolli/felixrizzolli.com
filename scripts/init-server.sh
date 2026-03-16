@@ -78,7 +78,13 @@ fi
 if [ "$WITH_PROXY" = "true" ]; then
   echo "==> Starting shared reverse proxy (Traefik)..."
   cd "$INFRA_DIR"
+  # -p proxy pins this stack to its own project name, keeping it completely
+  # isolated from the application project ("infrastructure").  This matches
+  # the `name: proxy` directive in compose.proxy.yml and prevents Docker
+  # Compose from ever treating the traefik container as an orphan of the
+  # application project during deployments.
   docker compose \
+    -p proxy \
     -f compose.proxy.yml \
     --env-file "$ENV_FILE" \
     up -d

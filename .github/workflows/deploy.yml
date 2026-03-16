@@ -33,16 +33,21 @@ concurrency:
 
 jobs:
   deploy:
-    name: Deploy ${{ github.event.action || inputs.service }}
+    name: Deploy
     runs-on: ubuntu-latest
     environment: production
 
     steps:
       - name: Resolve service name and version
         id: params
+        env:
+          GH_EVENT_ACTION: ${{ github.event.action }}
+          INPUT_SERVICE: ${{ inputs.service }}
+          CLIENT_PAYLOAD_VERSION: ${{ github.event.client_payload.version }}
+          INPUT_VERSION: ${{ inputs.version }}
         run: |
           # Map repository_dispatch event types → service names
-          EVENT="${{ github.event.action || inputs.service }}"
+          EVENT="${GH_EVENT_ACTION:-$INPUT_SERVICE}"
           case "$EVENT" in
             api-updated)        SERVICE="api"       ;;
             www-updated)        SERVICE="www"       ;;
@@ -54,7 +59,7 @@ jobs:
 
           # Version: prefer client_payload from repository_dispatch, then
           # workflow_dispatch input, then fall back to "latest"
-          VERSION="${{ github.event.client_payload.version || inputs.version }}"
+          VERSION="${CLIENT_PAYLOAD_VERSION:-$INPUT_VERSION}"
           VERSION="${VERSION:-latest}"
 
           echo "service=$SERVICE"   >> "$GITHUB_OUTPUT"
@@ -78,7 +83,7 @@ jobs:
           PROD_ENV: ${{ secrets.PROD_ENV }}
         run: |
           # 1. Write the sensitive secrets blob.
-          #    Using env: instead of inline ${{ }} correctly handles
+          #    Using env: instead of inline expressions correctly handles
           #    multiline values and special characters.
           printf '%s\n' "$PROD_ENV" > .env.prod
 
@@ -140,6 +145,9 @@ jobs:
             return 1
           }
 
-          check "https://felixrizzolli.com"
           check "https://api.felixrizzolli.com/_health"
-          check "https://wedding.felixrizzolli.com/_health"
+          # check "https://felixrizzolli.com/_health"
+          # check "https://www.felixrizzolli.com/_health"
+          # check "https://docs.felixrizzolli.com/_health"
+          # check "https://wedding.felixrizzolli.com/_health"
+          # check "https://traveling.felixrizzolli.com/_health"

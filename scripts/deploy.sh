@@ -6,24 +6,24 @@ set -euo pipefail
 #
 # Usage: deploy.sh <service> [version]
 #
-#   service  – one of: all | api | www | docs | wedding | traveling
+#   service  – one of: all | payload | nuxt | storybook
 #   version  – Docker image tag to deploy (default: latest)
 #
 # Examples:
-#   ./deploy.sh api
-#   ./deploy.sh wedding sha-abc1234
+#   ./deploy.sh payload
+#   ./deploy.sh payload sha-abc1234
 #   ./deploy.sh all
 # ---------------------------------------------------------------------------
 
 usage() {
   echo "Usage: $0 <service> [version]"
   echo ""
-  echo "  service  - One of: all, api, www, docs, wedding, traveling"
+  echo "  service  - One of: all, payload, nuxt, storybook"
   echo "  version  - Docker image tag to deploy (default: latest)"
   echo ""
   echo "Examples:"
-  echo "  $0 api"
-  echo "  $0 wedding sha-abc1234"
+  echo "  $0 payload"
+  echo "  $0 payload sha-abc1234"
   echo "  $0 all"
   exit 1
 }
@@ -42,7 +42,7 @@ echo "====================================================================="
 # ---------------------------------------------------------------------------
 # 1. Update infrastructure config from the repository
 # ---------------------------------------------------------------------------
-REPO_DIR="/var/www/felixrizzolli.com"
+REPO_DIR="/var/www/kraeuterakademie.it"
 cd "$REPO_DIR"
 
 echo "==> Syncing infrastructure files..."
@@ -58,9 +58,17 @@ if [ ! -f "$ENV_FILE" ]; then
 fi
 
 COMPOSE_BASE=(
+  # -p pins every docker compose call to the "felixrizzolli" project name.
+  # Without this, Docker Compose falls back to the directory name
+  # ("infrastructure"), which could be identical as for other projects on
+  # the server. That collision would make Docker Compose treat containers
+  # from other projects as orphans of THIS project and remove them. The
+  # explicit name here, together with `name: felixrizzolli` in compose.yml,
+  # guarantees full isolation.
+  "-p" "felixrizzolli"
   # Note: compose.proxy.yml (Traefik) is intentionally excluded here.
   # The reverse proxy is a standalone service managed by init-server.sh
-  # and shared with other projects on this server
+  # and shared with potentially other projects on the server.
   "-f" "compose.yml"
   "-f" "compose.api.yml"
   "-f" "compose.www.yml"
@@ -143,7 +151,8 @@ case $SERVICE in
       export TRAVELING_VERSION=$VERSION
       docker compose "${COMPOSE_BASE[@]}" pull
       echo "--> Starting all services..."
-      docker compose "${COMPOSE_BASE[@]}" up -d --wait --wait-timeout 300 --remove-orphans
+
+      docker compose "${COMPOSE_BASE[@]}" up -d --wait --wait-timeout 300
     )
     echo "✓  All services are healthy"
     ;;
@@ -155,12 +164,28 @@ esac
 
 # ---------------------------------------------------------------------------
 # 4. Post-deploy cleanup
+#    Only remove dangling (superseded) images that belong to this project.
+#    Global `docker image prune` is intentionally avoided to prevent
+#    accidentally cleaning up images from the proxy or other projects.
 # ---------------------------------------------------------------------------
 echo ""
-echo "==> Cleaning up dangling images..."
-docker image prune -f
+echo "==> Cleaning up old project images..."
+for repo in \
+  "ghcr.io/felixrizzolli/felixrizzolli-com-api" \
+  "ghcr.io/felixrizzolli/felixrizzolli-com-www" \
+  "ghcr.io/felixrizzolli/felixrizzolli-com-docs" \
+  "ghcr.io/felixrizzolli/felixrizzolli-com-wedding" \
+  "ghcr.io/felixrizzolli/felixrizzolli-com-traveling"; do
+
+  # Collect image IDs for this repo that are no longer tagged (dangling).
+  # After a pull the old image loses its tag and shows as <none> for that repo.
+  mapfile -t old_ids < <(docker images "$repo" --filter "dangling=true" -q 2>/dev/null || true)
+  for id in "${old_ids[@]}"; do
+    echo "   Removing old image: $repo ($id)"
+    docker rmi "$id" 2>/dev/null || true
+  done
+done
 
 echo ""
 echo "==> Deployment complete. Current status:"
 docker compose "${COMPOSE_BASE[@]}" ps
-
