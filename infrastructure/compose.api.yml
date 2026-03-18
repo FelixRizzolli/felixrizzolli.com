@@ -1,7 +1,7 @@
 services:
   api:
     container_name: "felixrizzolli-com-api"
-    image: ghcr.io/felixrizzolli/felixrizzolli-com-api:${PAYLOAD_VERSION:-latest}
+    image: ghcr.io/felixrizzolli/felixrizzolli-com-api:${API_VERSION:-latest}
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.api.rule=Host(`${API_DOMAIN}`)"
@@ -10,6 +10,8 @@ services:
       - "traefik.http.services.api.loadbalancer.server.port=${API_PORT}"
     environment:
       NODE_ENV: ${NODE_ENV:-production}
+      PORT: ${API_PORT}
+      HOSTNAME: ${API_HOST}
     env_file:
       - path: ./.env.prod
         required: true
@@ -40,5 +42,5 @@ services:
       - traefik-public  # Traefik routes HTTPS traffic here
       - felixrizzolli   # Database access
     depends_on:
-      database:
+      postgres:
         condition: service_healthy
