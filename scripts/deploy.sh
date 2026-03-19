@@ -42,7 +42,7 @@ echo "====================================================================="
 # ---------------------------------------------------------------------------
 # 1. Update infrastructure config from the repository
 # ---------------------------------------------------------------------------
-REPO_DIR="/var/www/kraeuterakademie.it"
+REPO_DIR="/var/www/felixrizzolli.com"
 cd "$REPO_DIR"
 
 echo "==> Syncing infrastructure files..."
